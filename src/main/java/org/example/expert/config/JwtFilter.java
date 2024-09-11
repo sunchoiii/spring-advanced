@@ -37,7 +37,7 @@ public class JwtFilter implements Filter {
             return;
         }
 
-        String bearerJwt = httpRequest.getHeader("Authorization");
+        String bearerJwt = jwtUtil.getTokenFromRequest(httpRequest);
 
         if (bearerJwt == null) {
             // 토큰이 없는 경우 400을 반환합니다.
