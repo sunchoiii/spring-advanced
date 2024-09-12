@@ -12,6 +12,8 @@ import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
 import org.example.expert.domain.user.repository.UserRepository;
+import org.example.expert.global.common.DataSetting;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,7 +26,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 
 @ExtendWith(MockitoExtension.class)
 class ManagerServiceTest {
@@ -65,7 +69,7 @@ class ManagerServiceTest {
 
         // when & then
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-            managerService.saveManager(authUser, todoId, managerSaveRequest)
+                managerService.saveManager(authUser, todoId, managerSaveRequest)
         );
 
         assertEquals("담당자를 등록하려고 하는 유저가 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
@@ -94,7 +98,8 @@ class ManagerServiceTest {
         assertEquals(mockManager.getUser().getEmail(), managerResponses.get(0).getUser().getEmail());
     }
 
-    @Test // 테스트코드 샘플
+    @Test
+        // 테스트코드 샘플
     void todo가_정상적으로_등록된다() {
         // given
         AuthUser authUser = new AuthUser(1L, "a@a.com", UserRole.USER);
@@ -121,4 +126,74 @@ class ManagerServiceTest {
         assertEquals(managerUser.getId(), response.getUser().getId());
         assertEquals(managerUser.getEmail(), response.getUser().getEmail());
     }
+
+
+    @Test
+    @DisplayName("fail deleteManager : 일정이 없을 경우 예외발생")
+    public void test1() {
+        // given
+        given(todoRepository.findById(DataSetting.todoId)).willReturn(Optional.empty());
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(DataSetting.authUser, DataSetting.todoId, DataSetting.managerId));
+        assertEquals("Todo not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("fail deleteManager : 일정을 작성한 유저가 null인 경우 예외발생")
+    void test2 () {
+        // given
+        Todo todo = new Todo();
+        ReflectionTestUtils.setField(todo, "user", null);
+
+        given(todoRepository.findById(DataSetting.todoId)).willReturn(Optional.of(todo));
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(DataSetting.authUser, DataSetting.todoId, DataSetting.managerId));
+        assertEquals("해당 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
+
+
+    @Test
+    @DisplayName("fail deleteManager : 해당 유저가 일정을 작성한 유저가 아닌 경우 예외발생")
+    void test3 () {
+        // given
+        User user = new User("b@b.com","password", UserRole.USER);
+        Todo todo = new Todo();
+        ReflectionTestUtils.setField(todo, "user", user);
+
+        given(todoRepository.findById(DataSetting.todoId)).willReturn(Optional.of(todo));
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(DataSetting.authUser, DataSetting.todoId, DataSetting.managerId));
+        assertEquals("해당 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
+
+
+    @Test
+    @DisplayName("succeed deleteManager : 매니저 정상적으로 삭제")
+    void test4 () {
+        // given
+        Todo todo = DataSetting.createTodo();
+        Manager manager = DataSetting.createManagerWithTodo();
+
+        given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
+        given(managerRepository.findById(DataSetting.managerId)).willReturn(Optional.of(manager));
+        willDoNothing().given(managerRepository).delete(manager);
+
+        // when
+        managerService.deleteManager(DataSetting.authUser, DataSetting.todoId, DataSetting.managerId);
+
+        // then : 삭제 후 데이터를 다시 조회하여 null 인지 확인
+        given(managerRepository.findById(DataSetting.managerId)).willReturn(Optional.empty());
+        Manager deleteManager = managerRepository.findById(DataSetting.managerId).orElse(null);
+        assertNull(deleteManager);
+
+    }
+
+
 }
+
