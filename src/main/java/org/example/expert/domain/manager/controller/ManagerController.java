@@ -1,6 +1,6 @@
 package org.example.expert.domain.manager.controller;
 
-import io.jsonwebtoken.Claims;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.config.JwtUtil;

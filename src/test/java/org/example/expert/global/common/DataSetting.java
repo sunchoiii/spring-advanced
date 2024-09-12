@@ -3,6 +3,7 @@ package org.example.expert.global.common;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.manager.entity.Manager;
 import org.example.expert.domain.todo.entity.Todo;
+import org.example.expert.domain.user.dto.request.UserChangePasswordRequest;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -32,6 +33,13 @@ public class DataSetting {
         ReflectionTestUtils.setField(manager, "id", managerId);
         ReflectionTestUtils.setField(manager, "todo", createTodo());
         return manager;
+    }
+
+    public static UserChangePasswordRequest userChangePasswordRequest () {
+        UserChangePasswordRequest userChangePasswordRequest = new UserChangePasswordRequest();
+        ReflectionTestUtils.setField(userChangePasswordRequest, "oldPassword", "test");
+        ReflectionTestUtils.setField(userChangePasswordRequest, "newPassword", "testtest");
+        return userChangePasswordRequest;
     }
 
 }
