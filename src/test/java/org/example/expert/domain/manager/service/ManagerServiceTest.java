@@ -29,6 +29,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ManagerServiceTest {
@@ -187,13 +189,9 @@ class ManagerServiceTest {
         // when
         managerService.deleteManager(DataSetting.authUser, DataSetting.todoId, DataSetting.managerId);
 
-        // then : 삭제 후 데이터를 다시 조회하여 null 인지 확인
-        given(managerRepository.findById(DataSetting.managerId)).willReturn(Optional.empty());
-        Manager deleteManager = managerRepository.findById(DataSetting.managerId).orElse(null);
-        assertNull(deleteManager);
-
+        // then
+        verify(managerRepository, times(1)).delete(manager);
     }
-
 
 }
 
